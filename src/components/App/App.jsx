@@ -35,6 +35,7 @@ async function submitSearchBar (event) {
         theme: "dark",
         transition: Slide,
       });
+      return;
   };
 
     if (newQuery !== query) {
@@ -77,17 +78,17 @@ async function submitSearchBar (event) {
   }, [query, page]);
 
 
-  useEffect(() => {
-    if (isModalOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "auto";
-    }
+  // useEffect(() => {
+  //   if (isModalOpen) {
+  //     document.body.style.overflow = "hidden";
+  //   } else {
+  //     document.body.style.overflow = "auto";
+  //   }
   
-    return () => {
-      document.body.style.overflow = "auto";
-    };
-  }, [isModalOpen]);
+  //   return () => {
+  //     document.body.style.overflow = "auto";
+  //   };
+  // }, [isModalOpen]);
   
   const handleModalOpen = (id) => {
     setCurrentImage(() => items.find((image) => image.id === id));
@@ -108,7 +109,7 @@ async function submitSearchBar (event) {
     <>
       <SearchBar onSubmit={submitSearchBar} />
       <ImageGallery items={items} handleModalOpen={handleModalOpen} />
-      {isModalOpen && <ImageModal currentImage={currentImage} isModalOpen={isModalOpen} closeModal={handleModalClose} />}
+      {isModalOpen && currentImage && <ImageModal currentImage={currentImage} isModalOpen={isModalOpen} closeModal={handleModalClose} />}
       {items.length > 0 && <LoadMoreBtn handleLoadMoreBtn={handleLoadMoreBtn} />}
       {loader && <Loader />}
       {errors && <ErrorMessage />}
