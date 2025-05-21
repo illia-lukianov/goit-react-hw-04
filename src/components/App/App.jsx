@@ -78,17 +78,9 @@ async function submitSearchBar (event) {
   }, [query, page]);
 
 
-  // useEffect(() => {
-  //   if (isModalOpen) {
-  //     document.body.style.overflow = "hidden";
-  //   } else {
-  //     document.body.style.overflow = "auto";
-  //   }
-  
-  //   return () => {
-  //     document.body.style.overflow = "auto";
-  //   };
-  // }, [isModalOpen]);
+  useEffect(() => {
+    document.body.style.overflow = isModalOpen ? "hidden" : "auto";
+  }, [isModalOpen]);
   
   const handleModalOpen = (id) => {
     setCurrentImage(() => items.find((image) => image.id === id));

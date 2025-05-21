@@ -6,9 +6,6 @@ import { useEffect } from 'react';
 Modal.setAppElement("#root");
 export default function ImageModal ({currentImage: {alt_description, color, description, likes, urls}, isModalOpen, closeModal}) {
 
-    useEffect(() => {
-        document.body.style.overflow = isModalOpen ? "hidden" : "auto";
-      }, [isModalOpen]);
 
     const customStyles = {
       content: {
