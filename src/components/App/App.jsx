@@ -1,57 +1,119 @@
-import { useEffect, useState } from 'react'
-import ContactForm from '../ContactForm/ContactForm'
-import ContactList from '../ContactList/ContactList'
-import SearchBox from '../SearchBox/SearchBox'
+import ErrorMessage from '../ErrorMessage/ErrorMessage'
+import ImageGallery from '../ImageGallery/ImageGallery'
+import Loader from '../Loader/Loader'
+import LoadMoreBtn from '../LoadMoreBtn/LoadMoreBtn'
+import SearchBar from '../SearchBar/SearchBar'
 import style from './App.module.css'
+import galleryQuery from '../../../API-query/gallery-query'
+import { useEffect, useState } from 'react'
+import ImageModal from '../ImageModal/ImageModal'
+import { Slide, toast, ToastContainer } from 'react-toastify'
 
 
 export default function App() {
 
-  const initialData = [
-    {id: 'id-1', name: 'Rosie Simpson', number: '459-12-56'},
-    {id: 'id-2', name: 'Hermione Kline', number: '443-89-12'},
-    {id: 'id-3', name: 'Eden Clements', number: '645-17-79'},
-    {id: 'id-4', name: 'Annie Copeland', number: '227-91-26'},
-  ]
+const [items, setItems] = useState([]);
+const [errors, setErrors] = useState(false);
+const [loader, setLoader] = useState(false);
+const [page, setPage] = useState(1);
+const [isModalOpen, setIsModalOpen] = useState(false);
+const [currentImage, setCurrentImage] = useState(null);
+const [query, setQuery] = useState("")
+  
+async function submitSearchBar (event) {
+    event.preventDefault();
+    const newQuery = event.target.elements.SearchImages.value;
 
-  const [phoneData, setPhoneNumber] = useState(() => {
-    const data = localStorage.getItem("numberData")
-    if (data!==null&& data.length>0) {
-      return JSON.parse(data)
-    } else {
-      return initialData
-    }
-  })
-  
-  const [filter, setFilter] = useState('')
-  
-  const handleFilterChange = (value) => {
-    setFilter(value)
-  }
-  
-  const visibilityPhoneData = phoneData.filter((phone) => phone.name.toLowerCase().includes(filter.toLowerCase()))
-  
-  const addNumber = (newData) => {
-    setPhoneNumber((prevData) => [
-      ...prevData,
-      newData,
-    ])}
+    if (!newQuery) {
+      toast.error('Please enter your query...', {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: false,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "dark",
+        transition: Slide,
+      });
+  };
 
-  const removeNumber = (numberId) => {
-    setPhoneNumber((prevNumbers) => {return prevNumbers.filter((number) => number.id !== numberId)})
-  }
-  
+    if (newQuery !== query) {
+      setItems([]);
+      setPage(1); 
+      setQuery(newQuery);
+    };
+  };
+
   useEffect(() => {
-    localStorage.setItem("numberData", JSON.stringify(phoneData))
-  }, [phoneData])
+    if (!query.trim()) return;
+
+    const fetchImages = async () => { 
+      try {
+        setErrors(false);
+        setLoader(true);
+        const data = (await (galleryQuery(query, page))).data.results;
+        if (!data ||data.length === 0) {
+          toast.error('Sorry nothing found...', {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: false,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "dark",
+            transition: Slide,
+          });
+          return;
+        }
+        setItems((prevData) => [ ...prevData, ...data]);
+      } catch {
+        setErrors(true);
+      } finally {
+        setLoader(false);
+      }
+    }    
+    fetchImages();
+  }, [query, page]);
+
+
+  useEffect(() => {
+    if (isModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
   
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [isModalOpen]);
+  
+  const handleModalOpen = (id) => {
+    setCurrentImage(() => items.find((image) => image.id === id));
+    setIsModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+  };
+
+  const handleLoadMoreBtn = () => {
+    setPage((prevPage) =>
+      prevPage + 1
+    );
+  };
 
   return (
-  <div>
-    <h1>Phonebook</h1>
-      <ContactForm addNumber={addNumber} />
-      <SearchBox value={filter} onFilter={handleFilterChange} />
-      <ContactList phoneData={visibilityPhoneData} removeNumber={removeNumber} />
-  </div>
+    <>
+      <SearchBar onSubmit={submitSearchBar} />
+      <ImageGallery items={items} handleModalOpen={handleModalOpen} />
+      {isModalOpen && <ImageModal currentImage={currentImage} isModalOpen={isModalOpen} closeModal={handleModalClose} />}
+      {items.length > 0 && <LoadMoreBtn handleLoadMoreBtn={handleLoadMoreBtn} />}
+      {loader && <Loader />}
+      {errors && <ErrorMessage />}
+      <ToastContainer />
+    </>
   )
 }
